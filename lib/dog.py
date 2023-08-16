@@ -33,7 +33,7 @@ class Dog:
             VALUES (?, ?)
         """
         CURSOR.execute(sql, (self.name, self.breed))
-        # self.id = CURSOR.lastrowid
+        self.id = CURSOR.lastrowid
 
     @classmethod
     def create(cls, name, breed):
@@ -41,3 +41,96 @@ class Dog:
         dog.save()
 
         return dog
+    
+    @classmethod
+    def new_from_db(cls,row):
+        doggy = cls(
+            name=row[1],
+            breed=row[2],
+            id=row[0]
+        )
+        return doggy
+    @classmethod
+    def get_all(cls):
+        sql = """
+            SELECT * FROM dogs
+        """
+
+        return [cls.new_from_db(row) for row in CURSOR.execute(sql).fetchall()]
+
+    @classmethod
+    def find_by_name(cls, name):
+        sql = """
+            SELECT * FROM dogs
+            WHERE name = ?
+            LIMIT 1
+        """
+
+        row = CURSOR.execute(sql, (name,)).fetchone()
+        if not row:
+            return None
+
+        return Dog(
+            name=row[1],
+            breed=row[2],
+            id=row[0]
+        )
+    @classmethod
+    def find_by_id(cls, id):
+        sql = """
+            SELECT * FROM dogs
+            WHERE id = ?
+            LIMIT 1
+        """
+
+        row = CURSOR.execute(sql, (id,)).fetchone()
+        if not row:
+            return None
+
+        return Dog(
+            name=row[1],
+            breed=row[2],
+            id=row[0]
+        )
+    @classmethod
+    def find_or_create_by(cls, name=None, breed=None):
+        sql = """
+            SELECT * FROM dogs
+            WHERE (name, breed) = (?, ?)
+            LIMIT 1
+        """
+
+        row = CURSOR.execute(sql, (name, breed)).fetchone()
+        if not row:
+            sql = """
+                INSERT INTO dogs (name, breed)
+                VALUES (?, ?)
+            """
+
+            CURSOR.execute(sql, (name, breed))
+            return Dog(
+                name=name,
+                breed=breed,
+                id=CURSOR.lastrowid
+            )
+
+        return Dog(
+            name=row[1],
+            breed=row[2],
+            id=row[0]
+        )
+
+    def update(self):
+        sql = """
+            UPDATE dogs
+            SET name = ?,
+                breed = ?
+            WHERE id = ?
+        """
+
+        CURSOR.execute(sql, (self.name, self.breed, self.id))
+
+
+
+
+
